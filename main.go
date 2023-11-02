@@ -22,21 +22,27 @@ func printCommandEvents(analyticsChannel <-chan *slacker.CommandEvent) {
 }
 
 func main() {
-	os.Setenv("SLACK_BOT_TOKEN", "xoxb-5981424515030-6158956182752-xxacWGzdccDXvFu9B40xqVdf")
-	os.Setenv("SLACK_APP_TOKEN", "xapp-1-A064NS7CNQ0-6135810076499-d7846e9c7e965e55ccb27517db18a8d88e4413480fdd2dfb4c40599d673a7fdd")
+	// Set your Slack bot token and app token
+	botToken := os.Getenv("SLACK_BOT_TOKEN")
+	appToken := os.Getenv("SLACK_APP_TOKEN")
 
-	bot := slacker.NewClient(os.Getenv("SLACK_BOT_TOKEN"), (os.Getenv("SLACK_APP_TOKEN")))
+	if botToken == "" || appToken == "" {
+		log.Fatal("Slack bot token and app token are required.")
+	}
+
+	bot := slacker.NewClient(botToken, appToken)
 
 	go printCommandEvents(bot.CommandEvents())
 
 	bot.Command("My year of birth is <year>", &slacker.CommandDefinition{
 		Description: "Year of birth calculator",
-
 		Handler: func(botCtx slacker.BotContext, request slacker.Request, response slacker.ResponseWriter) {
 			year := request.Param("year")
 			yob, err := strconv.Atoi(year)
 			if err != nil {
-				println("error")
+				log.Println("Error:", err)
+				response.Reply("Invalid year format. Please use 'My year of birth is YYYY' format.")
+				return
 			}
 			age := 2024 - yob
 			r := fmt.Sprintf("Age is %d", age)
@@ -52,5 +58,4 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 }
